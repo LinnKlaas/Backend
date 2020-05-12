@@ -24,7 +24,7 @@ getData();
 
 app.get('/mensa/:day', (req, res) => {
   if (data !== undefined) {
-    let daydata = data.filter(essen => essen.day == req.params.day);
+    let daydata = data.filter(essen => essen.day == req.params.day); //wenn data undefinded, dann Daten Daten posten, sonst nicht
     if(daydata.length === 0) {
       res.status(404).send('Error: 404');
     } else {
