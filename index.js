@@ -2,6 +2,10 @@
 const axios = require('axios').default;
 const express = require('express');
 const cors = require('cors');
+const mongo = require('mongodb').MongoClient;
+const client = await mongo.connect("mongodb://localhost:27017/mensa")
+    .catch(err => { console.log(err); });
+const db = await client.db();
 
 // Library inits
 const app = express();
