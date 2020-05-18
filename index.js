@@ -3,9 +3,30 @@ const axios = require('axios').default;
 const express = require('express');
 const cors = require('cors');
 const mongo = require('mongodb').MongoClient;
-const client = await mongo.connect("mongodb://localhost:27017/mensa")
-    .catch(err => { console.log(err); });
-const db = await client.db();
+
+// mongodb client init
+async function initMongoDB() {
+  const client = await mongo.connect('mongodb://localhost:27017/mensa')
+    .catch((err) => { console.log(err); });
+  const db = await client.db();
+  return db;
+}
+
+//insert a document
+async function updateDatabase(data){
+  const db = await initMongoDB();
+  const insertresult = await db.collection('essen').insertOne(data, (err) => {
+    if (err) throw err;
+    console.log('Document added');
+  });
+  return insertresult;
+}
+
+async function getFromDatabase(keyword) {
+  const db = await initMongoDB();
+  const getData = await db.collection('essen').find(keyword).toArray();
+  return getData;
+}
 
 // Library inits
 const app = express();
@@ -26,14 +47,11 @@ async function getData() {
 }
 getData();
 
-app.get('/mensa/:day', (req, res) => {
-  if (data !== undefined) {
-    let daydata = data.filter(essen => essen.day == req.params.day); //wenn data undefinded, dann Daten Daten posten, sonst nicht
-    if(daydata.length === 0) {
-      res.status(404).send('Error: 404');
-    } else {
-      res.send(daydata);
-    }
+// webserver endpoints
+app.get('/mensa/:day', async (req, res) => {
+  const findResults = await getFromDatabase({ day: req.params.day });
+  if (findResults.length > 0) {
+    res.send(findResults);
   } else {
     res.status(404).send('Error: 404');
   }
@@ -41,15 +59,17 @@ app.get('/mensa/:day', (req, res) => {
 
 app.post('/mensa/insert', (req, res) => {
   //Rausfinden ob Mahlzeit für gegebene Kategorie und Tag schon existiert
-  let findResult = data.find(essen => (essen.category === req.body.category && essen.day === req.body.day))
-
-  if(findResult == undefined) {
-    data.push(req.body);
-    res.status(200).send();
-  } else {
-    res.status(418).send();
-  }
-});
+  Object.keys(req.body).forEach(async (essen) => {
+    // TODO: Database search by keywords / identifiying key instead of comparing the complete object (independence)
+      const findResults = await getFromDatabase(essen);
+      if (findResults.length === 0) {
+        await updateDatabase(req.body[essen]);
+        res.status(200).send();
+      } else {
+        res.status(409).send('Conflict: This meal already exists');
+      }
+    });
+  });
 
 app.get('/api/getData/', (req, res) => {
   // eslint-disable-next-line no-console
