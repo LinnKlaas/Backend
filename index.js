@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const mongo = require('mongodb').MongoClient;
 
+
 // mongodb client init
 async function initMongoDB() {
   const client = await mongo.connect('mongodb://localhost:27017/mensa')
@@ -49,36 +50,42 @@ getData();
 
 // webserver endpoints
 app.get('/mensa/:day', async (req, res) => {
-  const findResults = await getFromDatabase({ day: req.params.day });
+  const db = await initMongoDB();
+  let getresult = await db.collection('essen').find({ day : req.params.day}).toArray();
+  console.log(getresult);
+ /* const findResults = await getFromDatabase({ day: req.params.day });
   if (findResults.length > 0) {
     res.send(findResults);
   } else {
     res.status(404).send('Error: 404');
-  }
+  }*/
 });
 
-app.post('/mensa/insert', (req, res) => {
-  //Rausfinden ob Mahlzeit für gegebene Kategorie und Tag schon existiert
-  Object.keys(req.body).forEach(async (essen) => {
+app.post('/mensa/insert', async (req, res) => {
     // TODO: Database search by keywords / identifiying key instead of comparing the complete object (independence)
-      const findResults = await getFromDatabase(essen);
-      if (findResults.length === 0) {
-        await updateDatabase(req.body[essen]);
-        res.status(200).send();
+      const db = await initMongoDB();
+      let anObject = { "name":"pudding", "day" : "Do" }
+      let insertresult = await db.collection('essen').insertOne(anObject)
+      const findResults = await getFromDatabase(req.body);
+      if (findResults.length === 0 ) {
+        res.status(200).send(insertresult);
       } else {
         res.status(409).send('Conflict: This meal already exists');
       }
+      /*const findResults = await getFromDatabase(req.body);
+      if (findResults.length === 0) {
+        res.status(200).send();
+      } else {
+        res.status(409).send('Conflict: This meal already exists');
+      }*/
     });
-  });
 
 app.get('/api/getData/', (req, res) => {
-  // eslint-disable-next-line no-console
   console.log('Access');
   res.status(200).send(data);
 });
 
 // Server starten
 app.listen(3000, () => {
-  // eslint-disable-next-line no-console
   console.log('Example app listening on port 3000!');
 });
