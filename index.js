@@ -38,7 +38,7 @@ let data = '';
 const uri = 'https://gist.githubusercontent.com/fg-uulm/666847dd7f11607fc2b6234c6d84d188/raw/2ca994ada633143903b10b2bf7ada3fd039cae35/mensa.json';
 
 const mysqlx = require('@mysql/xdevapi');
-mysqlx.getSession('root:Emil1938@localhost:3306/test_linn')
+mysqlx.getSession('root:Emil1938@localhost:33060/test_linn')
     .then(session => {
         console.log(session.inspect()); // { user: 'root', host: 'localhost', port: 33060 }
     });
